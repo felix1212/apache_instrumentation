@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apache Docker Test Page</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: #f4f7f6;
+        }
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 { color: #d9534f; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .status-badge {
+            display: inline-block;
+            background: #5cb85c;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .info {
+            background: #e9ecef;
+            padding: 1rem;
+            border-left: 5px solid #0275d8;
+            margin: 1rem 0;
+        }
+        button {
+            background: #0275d8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover { background: #01447e; }
+        footer { margin-top: 2rem; font-size: 0.8rem; color: #777; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <span class="status-badge">Connection Successful</span>
+        <h1>Apache 2.4 is Running!</h1>
+        
+        <p>If you can see this page, your <strong>Apache HTTP Server</strong> container is correctly serving files from the <code>public_html</code> volume.</p>
+
+        <div class="info">
+            <strong>Server Info:</strong>
+            <ul>
+                <li><strong>URL:</strong> <span id="url"></span></li>
+                <li><strong>Local Time:</strong> <span id="time"></span></li>
+            </ul>
+        </div>
+
+        <h3>Test Controls</h3>
+        <p>Click the button below to verify JavaScript execution:</p>
+        <button onclick="testFunction()">Run Test Alert</button>
+
+        <p style="margin-top: 20px;">
+            <a href="/server-status" style="color: #0275d8; text-decoration: none;">&rarr; Go to Apache Server Status</a>
+        </p>
+    </div>
+
+    <footer>
+        Powered by Docker & Apache 2.4 | Generated for Testing
+    </footer>
+
+    <script>
+        // Set dynamic info
+        document.getElementById('url').textContent = window.location.href;
+        document.getElementById('time').textContent = new Date().toLocaleString();
+
+        function testFunction() {
+            alert("Success! JavaScript is working on your Apache server.");
+        }
+    </script>
+</body>
+</html>

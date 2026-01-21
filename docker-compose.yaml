@@ -1,0 +1,109 @@
+# services:
+#   apache-server:
+#     image: httpd:2.4
+#     container_name: my-apache-app
+#     ports:
+#       - "8080:80"
+#     volumes:
+#       - ./public_html:/usr/local/apache2/htdocs/
+#       # 將配置檔案掛載到容器內
+#       - ./status.conf:/usr/local/apache2/conf/extra/status.conf
+#     # 修改啟動指令，確保載入 mod_status 模組並引用 status.conf
+#     command: >
+#       sh -c "sed -i 's/#LoadModule status_module/LoadModule status_module/' /usr/local/apache2/conf/httpd.conf && 
+#              echo 'Include conf/extra/status.conf' >> /usr/local/apache2/conf/httpd.conf && 
+#              httpd-foreground"
+#     restart: always
+
+# services:
+#   apache-server:
+#     image: httpd:2.4
+#     container_name: my-apache-app
+#     ports:
+#       - "8080:80"
+#     volumes:
+#       - ./public_html:/usr/local/apache2/htdocs/
+#       - ./status.conf:/usr/local/apache2/conf/extra/status.conf
+#       - ./mod_datadog.so:/usr/local/apache2/modules/mod_datadog.so
+#     command: >
+#       sh -c "sed -i 's/#LoadModule status_module/LoadModule status_module/' /usr/local/apache2/conf/httpd.conf && 
+#              sed -i 's/#LoadModule authn_file_module/LoadModule authn_file_module/' /usr/local/apache2/conf/httpd.conf && 
+#              sed -i 's/#LoadModule authz_user_module/LoadModule authz_user_module/' /usr/local/apache2/conf/httpd.conf && 
+#              sed -i 's/#LoadModule auth_basic_module/LoadModule auth_basic_module/' /usr/local/apache2/conf/httpd.conf &&
+#              htpasswd -bc /usr/local/apache2/conf/.htpasswd hkjc pass1234 && 
+#              echo 'Include conf/extra/status.conf' >> /usr/local/apache2/conf/httpd.conf && 
+#              httpd-foreground"
+
+services:
+  apache-server:
+    image: httpd:2.4
+    container_name: my-apache-app
+    ports:
+      - "8080:80"
+    environment:
+      - DD_SERVICE=my-apache-service
+      - DD_ENV=dev
+      - DD_AGENT_HOST=dd-agent
+    volumes:
+      - ./public_html:/usr/local/apache2/htdocs/
+      - ./status.conf:/usr/local/apache2/conf/extra/status.conf
+      - ./mod_datadog.so:/usr/local/apache2/modules/mod_datadog.so
+    command: >
+      sh -c "sed -i 's/#LoadModule status_module/LoadModule status_module/' /usr/local/apache2/conf/httpd.conf && 
+             sed -i 's/#LoadModule authn_file_module/LoadModule authn_file_module/' /usr/local/apache2/conf/httpd.conf && 
+             sed -i 's/#LoadModule authz_user_module/LoadModule authz_user_module/' /usr/local/apache2/conf/httpd.conf && 
+             sed -i 's/#LoadModule auth_basic_module/LoadModule auth_basic_module/' /usr/local/apache2/conf/httpd.conf &&
+             htpasswd -bc /usr/local/apache2/conf/.htpasswd hkjc pass1234 && 
+             echo 'LoadModule datadog_module modules/mod_datadog.so' >> /usr/local/apache2/conf/httpd.conf &&
+             echo 'Include conf/extra/status.conf' >> /usr/local/apache2/conf/httpd.conf && 
+             httpd-foreground"
+    networks:
+      - hkjc-lm
+
+  dd-agent:
+    cgroup: host
+    pid: host
+    container_name: dd-agent
+    environment:
+      - DD_API_KEY=4ab4dabfd1758889ed4d7a7dc06417ac
+      - DD_SITE=datadoghq.com
+      # - DD_OTLP_CONFIG_RECEIVER_PROTOCOLS_GRPC_ENDPOINT=0.0.0.0:4317
+      # - DD_OTLP_CONFIG_RECEIVER_PROTOCOLS_HTTP_ENDPOINT=0.0.0.0:4318
+      - DD_LOGS_INJECTION=true
+      - DD_LOGS_ENABLED=true
+      - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
+      # - DD_OTLP_CONFIG_LOGS_ENABLED=true
+      - DD_APM_ENABLED=true
+      - DD_APM_NON_LOCAL_TRAFFIC=true # Receive APM data from other containers
+      - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true # Receive metrics from other containers
+      - DD_APM_RECEIVER_SOCKET=/opt/datadog/apm/inject/run/apm.socket
+      - DD_PROCESS_AGENT_ENABLED=true
+      # - DD_APM_FILTER_TAGS_REJECT="db.operation:getMore"
+      # - "DD_APM_IGNORE_RESOURCES=^\\{\"getMore\":\\s*\"[^\"]*\",\\s*\"collection\":\\s*\"[^\"]*\",\\s*\"\\$db\":\\s*\"spanlink-demo\".*\\}$"
+      #- DD_SYSTEM_PROBE_NETWORK_ENABLED=true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc/:/host/proc/:ro
+      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    # ports:
+    #   - 4317:4317
+    #   - 8126:8126/tcp
+    #   - 4318:4318
+    image: gcr.io/datadoghq/agent:latest
+    cap_add:
+      - SYS_ADMIN
+      - SYS_RESOURCE
+      - SYS_PTRACE
+      - NET_ADMIN
+      - NET_BROADCAST
+      - NET_RAW
+      - IPC_LOCK
+      - CHOWN
+    security_opt:
+      - apparmor:unconfined
+    networks:
+      - hkjc-lm
+
+networks:
+  hkjc-lm:
