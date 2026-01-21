@@ -65,7 +65,6 @@ services:
     pid: host
     container_name: dd-agent
     environment:
-      - DD_API_KEY=4ab4dabfd1758889ed4d7a7dc06417ac
       - DD_SITE=datadoghq.com
       # - DD_OTLP_CONFIG_RECEIVER_PROTOCOLS_GRPC_ENDPOINT=0.0.0.0:4317
       # - DD_OTLP_CONFIG_RECEIVER_PROTOCOLS_HTTP_ENDPOINT=0.0.0.0:4318
